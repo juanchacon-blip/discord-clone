@@ -1,0 +1,17 @@
+// Pegar estos dos modelos al final de schema.prisma
+
+model Channel {
+  id        Int       @id @default(autoincrement())
+  name      String
+  messages  Message[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  author    String
+  channelId Int
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  createdAt DateTime @default(now())
+}
