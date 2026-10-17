@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
 import { ChannelsService } from './channels.service';
 
+@UseGuards(AuthGuard)
 @Controller('channels')
 export class ChannelsController {
   constructor(private channels: ChannelsService) {}
