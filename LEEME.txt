@@ -1,0 +1,72 @@
+DISCORD-CLONE - CHAT CON CANALES
+
+Requisitos: Node.js 20+ y PostgreSQL (con Docker o instalado normal).
+
+1) BASE DE DATOS (elige una)
+   Con Docker (en esta carpeta):   docker compose up -d
+   Sin Docker: instalar PostgreSQL con usuario postgres, clave postgres, puerto 5432.
+
+2) BACKEND (terminal 1)
+   cd backend
+   npm install
+   npx prisma migrate dev --name canales
+   npm run start:dev
+   -> queda en http://localhost:3000
+
+3) FRONTEND (terminal 2)
+   cd frontend
+   npm install
+   npm run dev
+   -> abrir http://localhost:5173
+
+4) Crear canales desde la interfaz (campo "nuevo canal" y boton "Crear canal"),
+   abrir la pagina en dos pestanas y escribir para probar el tiempo real.
+
+Notas:
+- La carpeta dist y node_modules NO se incluyen: se generan solos con npm install y npm run build.
+- Los archivos .env ya vienen con los valores para correr en local.
+- El nombre del autor es fijo ("juan") en frontend/src/App.tsx hasta que este el login.
+
+==============================================================
+PUBLICAR EN INTERNET (para que lo use cualquiera con el link)
+==============================================================
+Ahora el backend sirve tambien el frontend, asi que toda la app es UNA sola URL.
+
+--- OPCION A: probar YA desde tu PC (gratis, sin cuenta de hosting) ---
+Tu PC debe quedar encendida mientras otros lo usan.
+
+1) Compilar el frontend (una vez, y cada vez que cambies algo del frontend):
+     cd frontend
+     npm install
+     npm run build
+2) Arrancar el backend:
+     cd ../backend
+     npm run start:dev
+3) Abrir un tunel (instala cloudflared: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/):
+     cloudflared tunnel --url http://localhost:3000
+   Te imprime una URL https://algo.trycloudflare.com -> compartela, funciona desde cualquier lugar.
+
+--- OPCION B: dejarlo publicado 24/7 (Render + Neon, plan gratis) ---
+1) Sube esta carpeta a un repositorio de GitHub (los .env NO se suben, esta bien).
+2) Base de datos: crea un proyecto gratis en https://neon.com y copia el
+   "connection string" (empieza con postgresql://...). Usa la conexion DIRECTA
+   (la que NO tiene "-pooler" en el host), para que las migraciones funcionen bien.
+3) En https://render.com -> New -> Web Service -> conecta tu repo.
+     Language / Runtime: Docker      (usa el Dockerfile de la raiz)
+     Instance type: Free
+     Environment Variables:  DATABASE_URL = (el string de Neon)
+4) Deploy. Render te da una URL https://tu-app.onrender.com -> esa es la app.
+
+Notas del plan gratis de Render: si nadie la usa por 15 minutos, se duerme y la
+primera visita tarda ~1 minuto en despertar. Para que no se duerma hay que
+pasar al plan de pago (Starter).
+No uses la base Postgres gratis de Render: se borra a los 30 dias. Por eso Neon.
+
+--- Importante antes de dejarlo abierto al publico ---
+- No hay login: cualquiera puede entrar con cualquier nombre y crear canales.
+- Si ya tenias la base local creada a mano (canales.sql) y quieres usar las
+  migraciones tambien en local, ejecuta una vez en backend/:
+     npx prisma migrate resolve --applied 20261017000000_canales
+- Si quieres separar frontend y backend en dos sitios distintos, pon en el
+  frontend VITE_API_URL=https://tu-backend y en el backend
+  FRONTEND_URL=https://tu-frontend (se pueden poner varias separadas por coma).
