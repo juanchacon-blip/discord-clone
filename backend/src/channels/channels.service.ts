@@ -29,14 +29,19 @@ export class ChannelsService {
     return msgs.reverse();
   }
 
-  createMessage(channelId: number, author: string, content: string) {
+  createMessage(
+    channelId: number,
+    author: string,
+    content: string,
+    file?: { fileName: string; fileUrl: string },
+  ) {
     const cleanAuthor = String(author ?? '').trim().slice(0, MAX_AUTHOR);
     const cleanContent = String(content ?? '').trim().slice(0, MAX_CONTENT);
-    if (!Number.isInteger(channelId) || !cleanAuthor || !cleanContent) {
+    if (!Number.isInteger(channelId) || !cleanAuthor || (!cleanContent && !file)) {
       throw new BadRequestException('Mensaje invalido');
     }
     return this.prisma.message.create({
-      data: { channelId, author: cleanAuthor, content: cleanContent },
+      data: { channelId, author: cleanAuthor, content: cleanContent, ...file },
     });
   }
 }
