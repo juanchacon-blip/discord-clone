@@ -48,4 +48,14 @@ export class ChannelsGateway implements OnGatewayInit {
       this.logger.error(`Fallo al enviar mensaje: ${e.message}`);
     }
   }
+
+  @SubscribeMessage('typing')
+  typing(@ConnectedSocket() client: Socket, @MessageBody() channelId: number) {
+    const user = client.data.user as AuthUser;
+    client.to(`channel:${channelId}`).emit('typing', { channelId, name: user.name });
+  }
+
+  broadcast(msg: { channelId: number }) {
+    this.server.to(`channel:${msg.channelId}`).emit('message', msg);
+  }
 }
