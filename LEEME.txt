@@ -24,8 +24,21 @@ Requisitos: Node.js 20+ y PostgreSQL (con Docker o instalado normal).
 
 Notas:
 - La carpeta dist y node_modules NO se incluyen: se generan solos con npm install y npm run build.
-- Los archivos .env ya vienen con los valores para correr en local.
-- El nombre del autor es fijo ("juan") en frontend/src/App.tsx hasta que este el login.
+- Copia backend/.env.example a backend/.env y frontend/.env.example a frontend/.env
+  y pon tus datos de Auth0 (dominio, client id y audience) y la base de datos.
+- El login es con Auth0; el nombre que se ve en el chat sale de la cuenta.
+
+==============================================================
+ROLES Y PERMISOS
+==============================================================
+- Roles iniciales: administrador y empleado.
+- Solo el administrador puede crear canales y roles, cambiar el rol de los
+  usuarios y decidir que roles ven cada canal (boton "Administrar").
+- Un canal sin roles marcados lo ven todos. El administrador ve todos los canales.
+- Ajuste "Nuevos usuarios": ACTIVADO (por defecto) = todos los que entren por
+  primera vez son administradores. DESACTIVADO = entran como empleado.
+  Los usuarios que ya existen conservan su rol.
+- Siempre debe quedar al menos un administrador.
 
 ==============================================================
 PUBLICAR EN INTERNET (para que lo use cualquiera con el link)

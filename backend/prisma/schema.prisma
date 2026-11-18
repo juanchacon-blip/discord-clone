@@ -11,6 +11,7 @@ model Channel {
   id        Int       @id @default(autoincrement())
   name      String
   messages  Message[]
+  roles     ChannelRole[]
   createdAt DateTime  @default(now())
 }
 
@@ -23,4 +24,35 @@ model Message {
   channelId Int
   channel   Channel  @relation(fields: [channelId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Role {
+  id       Int           @id @default(autoincrement())
+  name     String        @unique
+  users    User[]
+  channels ChannelRole[]
+}
+
+// Si un canal no tiene filas aqui, lo ven todos. Si tiene, solo esos roles (y el administrador).
+model ChannelRole {
+  channelId Int
+  roleId    Int
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  role      Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, roleId])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  sub       String   @unique
+  name      String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
 }
