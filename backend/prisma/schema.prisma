@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Channel {
+  id        Int       @id @default(autoincrement())
+  name      String
+  messages  Message[]
+  roles     ChannelRole[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  author    String
+  fileName  String?
+  fileUrl   String?
+  // Archivos: tipo verificado, clave en el almacenamiento del proyecto y estado del respaldo en Drive
+  mimeType    String?
+  storageKey  String?
+  authorSub   String?
+  driveStatus String?   // 'pending' | 'ok' | 'failed' | null (el autor no tiene Drive conectado)
+  driveFileId String?
+  channelId Int
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Role {
+  id       Int           @id @default(autoincrement())
+  name     String        @unique
+  users    User[]
+  channels ChannelRole[]
+}
+
+// Si un canal no tiene filas aqui, lo ven todos. Si tiene, solo esos roles (y el administrador).
+model ChannelRole {
+  channelId Int
+  roleId    Int
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  role      Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, roleId])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  sub       String   @unique
+  name      String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+// Una fila por cuenta (Auth0 "sub") que conecto su Google Drive para respaldar sus archivos.
+model DriveConnection {
+  sub          String   @id
+  email        String?
+  refreshToken String   // cifrado (AES-256-GCM)
+  folderId     String?
+  createdAt    DateTime @default(now())
+}
