@@ -2,12 +2,21 @@
 
 ## Como funciona
 
-Cuando alguien sube una foto/archivo:
+1. Toda foto/archivo que se sube se guarda en el **almacenamiento del proyecto** (Supabase Storage, gratis).
+   De ahi sale lo que ve todo el chat.
+2. Cada cuenta que **conecte su Google Drive** recibe copia de **TODAS las imagenes de TODOS los canales**
+   (las suyas y las de los demas) en una carpeta llamada "Discord Clone - Respaldo".
+   - Imagen nueva: se copia sola al Drive de todas las cuentas conectadas.
+   - Al conectar Drive, tambien se copian las imagenes que ya existian. En Configuracion se ve el progreso
+     ("Imagenes respaldadas: 12 de 20") y hay un boton para reintentar las que falten o hayan fallado.
+   - Los archivos que NO son imagenes (PDF, etc.) solo se copian al Drive de quien los sube.
+3. Las cuentas sin Drive funcionan igual: solo ven las fotos desde el almacenamiento del proyecto.
 
-1. Se guarda en el **almacenamiento del proyecto** (Supabase Storage, gratis). De ahi sale lo que ve todo el chat.
-2. Si esa cuenta **conecto su Google Drive**, ademas se copia en segundo plano a SU Drive,
-   en una carpeta llamada "Discord Clone - Respaldo". Solo ella ve ese estado ("☁️ respaldado").
-3. Las cuentas sin Drive funcionan igual: solo tienen la copia del proyecto.
+Las copias se hacen de a 2 a la vez, en segundo plano, para no saturar a Google ni al servidor.
+Cada copia lleva una descripcion con el canal, el autor y la fecha.
+
+Importante: al conectar Drive, la persona recibe fotos de otras personas y ocupan espacio de su Drive.
+Eso se le explica en Configuracion antes de conectar.
 
 Seguridad: se pide el permiso `drive.file`, que deja a la app tocar **solo los archivos que ella
 misma crea**. No puede leer el resto del Drive del usuario. Los tokens se guardan cifrados (AES-256-GCM).
@@ -71,6 +80,7 @@ En Environment agrega: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIR
 - Si un usuario revoca el acceso desde su cuenta de Google, el siguiente respaldo falla,
   se borra la conexion y el boton "Conectar Google Drive" vuelve a aparecer.
 - Si borra la carpeta de respaldo, se crea otra sola en el siguiente archivo.
-- Los archivos subidos antes de esta version (`/uploads/...`) no se migran ni se respaldan.
+- Las imagenes viejas que se guardaron en el disco de Render (antes de configurar Supabase) y ya se perdieron
+  no se pueden respaldar: en Configuracion aparecen como "ya no existen en el servidor".
 - Solo las imagenes JPG/PNG/GIF/WEBP se muestran en linea (se verifica el contenido real, no el
   tipo que dice el navegador). Otros archivos salen como enlace de descarga.

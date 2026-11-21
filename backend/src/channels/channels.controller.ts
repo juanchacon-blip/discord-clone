@@ -10,6 +10,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { ChannelsGateway } from './channels.gateway';
 import { ChannelsService, toPublic } from './channels.service';
 import { DriveService } from '../drive/drive.service';
+import { BackupService } from './backup.service';
 import { StorageService } from '../storage/storage.service';
 import { sniffImage } from '../storage/file-type';
 import { MAX_FILE_SIZE } from './uploads';
@@ -26,6 +27,7 @@ export class ChannelsController {
     private gateway: ChannelsGateway,
     private storage: StorageService,
     private drive: DriveService,
+    private backup: BackupService,
   ) {}
 
   @Post()
@@ -71,26 +73,25 @@ export class ChannelsController {
 
     // 1) Copia del proyecto (de aqui sale lo que ve todo el chat)
     const fileUrl = await this.storage.save(storageKey, file.buffer, mimeType);
-
-    // 2) Si la cuenta tiene Drive conectado, el respaldo se hace en segundo plano
-    const hasDrive = await this.drive.isConnected(req.user.sub);
     const msg = await this.channels.createMessage(id, req.user.name, '', req.user.sub, {
-      fileName, fileUrl, mimeType, storageKey, driveStatus: hasDrive ? 'pending' : null,
+      fileName, fileUrl, mimeType, storageKey,
     });
     this.gateway.broadcast(toPublic(msg));
-    if (hasDrive) void this.backup(req.user.sub, msg.id, id, { name: fileName, mimeType, data: file.buffer });
-    return toPublic(msg, req.user.sub);
+
+    // 2) Respaldo en segundo plano:
+    //    - una IMAGEN se copia al Drive de TODAS las cuentas que tienen Drive conectado
+    //    - cualquier otro archivo solo al Drive de quien lo subio
+    const subs = image
+      ? await this.drive.connectedSubs()
+      : (await this.drive.isConnected(req.user.sub)) ? [req.user.sub] : [];
+    void this.backup.enqueueNew(msg, subs, file.buffer).catch((e: Error) =>
+      this.logger.error(`No se pudo encolar el respaldo (mensaje ${msg.id}): ${e.message}`));
+    return toPublic(msg, subs.includes(req.user.sub) ? 'pending' : null);
   }
 
-  private async backup(sub: string, messageId: number, channelId: number, file: { name: string; mimeType: string; data: Buffer }) {
-    try {
-      const driveFileId = await this.drive.backup(sub, file);
-      await this.channels.setDriveResult(messageId, 'ok', driveFileId);
-      this.gateway.notifyBackup(sub, { id: messageId, channelId, driveStatus: 'ok' });
-    } catch (e) {
-      this.logger.error(`Respaldo en Drive fallo (mensaje ${messageId}): ${(e as Error).message}`);
-      await this.channels.setDriveResult(messageId, 'failed').catch(() => undefined);
-      this.gateway.notifyBackup(sub, { id: messageId, channelId, driveStatus: 'failed' });
-    }
+  /** Copia a MI Drive todas las imagenes de todos los canales que todavia no tengo. */
+  @Post('backup-images')
+  async backupImages(@Req() req: Req_) {
+    return { queued: await this.backup.backfill(req.user.sub) };
   }
 }

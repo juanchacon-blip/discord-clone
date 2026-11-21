@@ -82,7 +82,25 @@ export class DriveService {
   async status(sub: string) {
     if (!this.enabled) return { enabled: false, connected: false, missing: this.missing };
     const c = await this.prisma.driveConnection.findUnique({ where: { sub } });
-    return { enabled: true, connected: Boolean(c), email: c?.email ?? null };
+    if (!c) return { enabled: true, connected: false, email: null };
+
+    // Progreso del respaldo de TODAS las imagenes de todos los canales
+    const images = { fileUrl: { not: null }, mimeType: { startsWith: 'image/' } };
+    const [total, rows] = await Promise.all([
+      this.prisma.message.count({ where: images }),
+      this.prisma.driveBackup.groupBy({ by: ['status'], where: { sub, message: images }, _count: { _all: true } }),
+    ]);
+    const n = (status: string) => rows.find((r) => r.status === status)?._count._all ?? 0;
+    return {
+      enabled: true, connected: true, email: c.email ?? null,
+      images: { total, ok: n('ok'), pending: n('pending'), failed: n('failed'), missing: n('missing') },
+    };
+  }
+
+  /** Cuentas que tienen Drive conectado (todas reciben copia de todas las imagenes). */
+  async connectedSubs(): Promise<string[]> {
+    if (!this.enabled) return [];
+    return (await this.prisma.driveConnection.findMany({ select: { sub: true } })).map((c) => c.sub);
   }
 
   async isConnected(sub: string): Promise<boolean> {
@@ -104,7 +122,7 @@ export class DriveService {
   // ---------- Respaldo ----------
 
   /** Sube el archivo al Drive de ESA cuenta (carpeta propia de la app) y devuelve el id del archivo. */
-  async backup(sub: string, file: { name: string; mimeType: string; data: Buffer }): Promise<string> {
+  async backup(sub: string, file: { name: string; mimeType: string; data: Buffer; description?: string }): Promise<string> {
     const conn = await this.prisma.driveConnection.findUnique({ where: { sub } });
     if (!conn) throw new Error('La cuenta no tiene Drive conectado');
 
@@ -114,7 +132,7 @@ export class DriveService {
 
     const send = async (folderId: string) =>
       (await api.files.create({
-        requestBody: { name: file.name, parents: [folderId] },
+        requestBody: { name: file.name, description: file.description, parents: [folderId] },
         media: { mimeType: file.mimeType, body: Readable.from(file.data) },
         fields: 'id',
       })).data.id as string;

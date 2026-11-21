@@ -9,16 +9,15 @@ const MAX_CONTENT = 2000;
 type Stored = {
   id: number; content: string; author: string; channelId: number; createdAt: Date;
   fileName: string | null; fileUrl: string | null; mimeType: string | null;
-  authorSub: string | null; driveStatus: string | null;
 };
 
 // Lo que ve el navegador. Datos internos (clave de storage, id de Drive, sub) nunca salen.
-// El estado del respaldo en Drive solo se le muestra a quien subio el archivo.
-export function toPublic(m: Stored, viewerSub?: string) {
+// El estado del respaldo en Drive es de cada espectador (su propio Drive), nunca del mensaje.
+export function toPublic(m: Stored, driveStatus: string | null = null) {
   return {
     id: m.id, content: m.content, author: m.author, channelId: m.channelId, createdAt: m.createdAt,
     fileName: m.fileName, fileUrl: m.fileUrl, mimeType: m.mimeType,
-    driveStatus: viewerSub && m.authorSub === viewerSub ? m.driveStatus : null,
+    driveStatus,
   };
 }
 
@@ -99,7 +98,14 @@ export class ChannelsService {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
-    return msgs.reverse().map(m => toPublic(m, viewerSub));
+    const ordered = msgs.reverse();
+    // Estado del respaldo de cada imagen en el Drive de QUIEN mira (no el de los demas).
+    const ids = ordered.filter(m => m.fileUrl).map(m => m.id);
+    const rows = viewerSub && ids.length
+      ? await this.prisma.driveBackup.findMany({ where: { sub: viewerSub, messageId: { in: ids } }, select: { messageId: true, status: true } })
+      : [];
+    const status = new Map<number, string>(rows.map(r => [r.messageId, r.status]));
+    return ordered.map(m => toPublic(m, status.get(m.id) ?? null));
   }
 
   async createMessage(
@@ -107,7 +113,7 @@ export class ChannelsService {
     author: string,
     content: string,
     authorSub: string,
-    file?: { fileName: string; fileUrl: string; mimeType: string; storageKey: string; driveStatus: string | null },
+    file?: { fileName: string; fileUrl: string; mimeType: string; storageKey: string },
   ) {
     const cleanAuthor = String(author ?? '').trim().slice(0, MAX_AUTHOR);
     const cleanContent = String(content ?? '').trim().slice(0, MAX_CONTENT);
@@ -117,9 +123,5 @@ export class ChannelsService {
     return this.prisma.message.create({
       data: { channelId, author: cleanAuthor, authorSub, content: cleanContent, ...file },
     });
-  }
-
-  async setDriveResult(id: number, driveStatus: 'ok' | 'failed', driveFileId?: string) {
-    await this.prisma.message.update({ where: { id }, data: { driveStatus, driveFileId } });
   }
 }

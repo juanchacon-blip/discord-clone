@@ -26,8 +26,9 @@ model Message {
   mimeType    String?
   storageKey  String?
   authorSub   String?
-  driveStatus String?   // 'pending' | 'ok' | 'failed' | null (el autor no tiene Drive conectado)
+  driveStatus String?   // OBSOLETO: ahora el respaldo de cada cuenta se guarda en DriveBackup
   driveFileId String?
+  backups     DriveBackup[]
   channelId Int
   channel   Channel  @relation(fields: [channelId], references: [id])
   createdAt DateTime @default(now())
@@ -81,4 +82,18 @@ model ChannelRead {
   channel    Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@id([sub, channelId])
+}
+
+// Copia de una imagen en el Drive de una cuenta. Una fila por (cuenta, mensaje).
+// status: 'pending' | 'ok' | 'failed' | 'missing' (el archivo original ya no existe)
+model DriveBackup {
+  sub         String
+  messageId   Int
+  status      String
+  driveFileId String?
+  createdAt   DateTime @default(now())
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@id([sub, messageId])
+  @@index([messageId])
 }

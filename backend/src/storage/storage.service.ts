@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { unlink, writeFile } from 'fs/promises';
+import { readFile, unlink, writeFile } from 'fs/promises';
 import { basename, join } from 'path';
 import { UPLOAD_DIR } from '../channels/uploads';
 
@@ -9,6 +9,9 @@ import { UPLOAD_DIR } from '../channels/uploads';
  *  - Si no -> carpeta local uploads/ (sirve para desarrollo; en Render gratis se borra al reiniciar).
  * Para cambiar de proveedor (Cloudflare R2, Cloudinary...) solo hay que tocar este archivo.
  */
+/** El archivo original ya no existe (por ejemplo, se perdio con un reinicio del disco local). */
+export class FileMissingError extends Error {}
+
 @Injectable()
 export class StorageService {
   private logger = new Logger(StorageService.name);
@@ -49,6 +52,25 @@ export class StorageService {
     }
     // El bucket debe ser PUBLICO para que las URLs funcionen en <img>.
     return `${this.url}/storage/v1/object/public/${this.bucket}/${storageKey}`;
+  }
+
+  /** Lee los bytes de un archivo ya guardado (para copiarlo a Drive). */
+  async read(fileUrl: string): Promise<Buffer> {
+    if (fileUrl.startsWith('/uploads/')) {
+      try {
+        return await readFile(join(UPLOAD_DIR, basename(fileUrl)));
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') throw new FileMissingError('El archivo ya no existe en el disco');
+        throw e;
+      }
+    }
+    // Solo se descargan archivos de NUESTRO almacenamiento (nunca una URL cualquiera).
+    const prefix = `${this.url}/storage/v1/object/public/${this.bucket}/`;
+    if (!this.remote || !fileUrl.startsWith(prefix)) throw new Error('El archivo no es de este almacenamiento');
+    const res = await fetch(fileUrl);
+    if (res.status === 404 || res.status === 400) throw new FileMissingError('El archivo ya no existe en el almacenamiento');
+    if (!res.ok) throw new Error(`Supabase Storage respondio ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
   }
 
   /**

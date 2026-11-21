@@ -270,7 +270,7 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
               ) : (
                 m.fileUrl && <a className="text-blue-600 underline" href={fileHref(m.fileUrl)} target="_blank" rel="noreferrer">📎 {m.fileName}</a>
               )}
-              {m.fileUrl && m.driveStatus && <span className="block text-xs text-gray-500">{BACKUP_LABEL[m.driveStatus]}</span>}
+              {m.fileUrl && m.driveStatus && BACKUP_LABEL[m.driveStatus] && <span className="block text-xs text-gray-500">{BACKUP_LABEL[m.driveStatus]}</span>}
             </div>
           ))}
         </div>

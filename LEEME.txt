@@ -47,8 +47,8 @@ NOTIFICACIONES
 ==============================================================
 FOTOS Y RESPALDO EN GOOGLE DRIVE
 ==============================================================
-- Cada cuenta puede conectar SU Google Drive (boton en la barra izquierda) y sus archivos
-  se respaldan ahi. El proyecto guarda su propia copia (Supabase Storage, gratis) para mostrarlas.
+- Cada cuenta puede conectar SU Google Drive (en ⚙️ Configuracion) y recibe copia de TODAS las
+  imagenes de TODOS los canales (nuevas y anteriores). El proyecto guarda su propia copia (Supabase Storage, gratis) para mostrarlas.
 - Configuracion paso a paso: GUIA-DRIVE.md
 - Despues de actualizar corre:  cd backend && npm install && npx prisma migrate dev
 

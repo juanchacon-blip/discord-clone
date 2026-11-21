@@ -89,7 +89,7 @@ export class ChannelsGateway implements OnGatewayInit {
   }
 
   /** Solo la cuenta que subio el archivo se entera de si el respaldo en Drive salio bien. */
-  notifyBackup(sub: string, info: { id: number; channelId: number; driveStatus: 'ok' | 'failed' }) {
+  notifyBackup(sub: string, info: { id: number; channelId: number; driveStatus: 'ok' | 'failed' | 'missing' }) {
     this.server.to(`user:${sub}`).emit('message:backup', info);
   }
 }
