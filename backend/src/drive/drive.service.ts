@@ -20,11 +20,14 @@ export class DriveService {
     if (!this.enabled) this.logger.warn('Google Drive desactivado: faltan GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI / TOKEN_ENCRYPTION_KEY.');
   }
 
+  /** Nombres (nunca valores) de las variables de entorno que faltan para que Drive funcione. */
+  get missing(): string[] {
+    return ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI', 'TOKEN_ENCRYPTION_KEY']
+      .filter(name => !process.env[name]);
+  }
+
   get enabled(): boolean {
-    return Boolean(
-      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET &&
-      process.env.GOOGLE_REDIRECT_URI && process.env.TOKEN_ENCRYPTION_KEY,
-    );
+    return this.missing.length === 0;
   }
 
   private client(): OAuth2Client {
@@ -77,7 +80,7 @@ export class DriveService {
   }
 
   async status(sub: string) {
-    if (!this.enabled) return { enabled: false, connected: false };
+    if (!this.enabled) return { enabled: false, connected: false, missing: this.missing };
     const c = await this.prisma.driveConnection.findUnique({ where: { sub } });
     return { enabled: true, connected: Boolean(c), email: c?.email ?? null };
   }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { io, Socket } from 'socket.io-client';
+import Settings from './Settings';
 
 // En desarrollo apunta a http://localhost:3000 (ver .env).
 // En produccion queda vacio: el backend sirve el frontend, asi que usa el mismo dominio.
@@ -11,7 +12,6 @@ type Msg = {
   id: number; author: string; content: string; channelId: number;
   fileName?: string; fileUrl?: string; mimeType?: string; driveStatus?: DriveStatus;
 };
-type DriveInfo = { enabled: boolean; connected: boolean; email?: string | null };
 
 // Con Supabase la URL ya viene completa (https://...); con disco local es relativa al backend.
 const fileHref = (url: string) => (url.startsWith('http') ? url : `${API}${url}`);
@@ -34,7 +34,9 @@ export default function ChannelChat() {
   const [unread, setUnread] = useState<Record<number, number>>({});
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [typing, setTyping] = useState<Record<string, number>>({});
-  const [drive, setDrive] = useState<DriveInfo | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  // Si volvemos de Google (?drive=ok | ?drive=error), se abre Configuracion con el resultado.
+  const [driveResult] = useState(() => new URLSearchParams(window.location.search).get('drive'));
   const lastTyping = useRef(0);
 
   // fetch que agrega el token de Auth0
@@ -70,36 +72,13 @@ export default function ChannelChat() {
 
   useEffect(() => { reload(); }, [reload]);
 
-  // Estado de Google Drive de esta cuenta
-  const loadDrive = useCallback(() => {
-    authFetch('/drive/status')
-      .then(r => (r.ok ? r.json() : null))
-      .then(setDrive)
-      .catch(() => setDrive(null));
-  }, [authFetch]);
-
-  useEffect(() => { loadDrive(); }, [loadDrive]);
-
-  // Al volver de la pantalla de permisos de Google (?drive=ok | ?drive=error)
+  // Limpia ?drive=... de la URL y abre Configuracion si venimos de Google
   useEffect(() => {
-    const result = new URLSearchParams(window.location.search).get('drive');
-    if (!result) return;
+    if (!driveResult) return;
     window.history.replaceState({}, '', window.location.pathname);
-    setAviso({ text: result === 'ok' ? 'Google Drive conectado' : 'No se pudo conectar Google Drive' });
-  }, []);
-
-  const connectDrive = async () => {
-    const res = await authFetch('/drive/auth-url');
-    if (!res.ok) return setAviso({ text: 'Google Drive no esta disponible en este servidor' });
-    const { url } = await res.json();
-    window.location.href = url;
-  };
-
-  const disconnectDrive = async () => {
-    if (!window.confirm('¿Desconectar tu Google Drive? Tus respaldos anteriores se quedan en tu Drive.')) return;
-    await authFetch('/drive', { method: 'DELETE' });
-    loadDrive();
-  };
+    const t = setTimeout(() => setShowSettings(true), 0);
+    return () => clearTimeout(t);
+  }, [driveResult]);
 
   useEffect(() => {
     if (!socket) return;
@@ -214,6 +193,7 @@ export default function ChannelChat() {
 
   return (
     <div className="flex h-screen">
+      {showSettings && <Settings authFetch={authFetch} driveResult={driveResult} onClose={() => setShowSettings(false)} />}
       <aside className="w-32 md:w-48 bg-gray-800 text-white p-2 flex flex-col">
         <div className="flex-1">
           {channels.map(c => (
@@ -228,14 +208,7 @@ export default function ChannelChat() {
           <button className="w-full mt-1 border p-1" onClick={createChannel}>Crear canal</button>
         </div>
         <div className="mt-2 text-sm">
-          {drive?.enabled && (drive.connected ? (
-            <div className="mb-2">
-              <p className="truncate text-green-400" title={drive.email ?? ''}>☁️ Drive: {drive.email || 'conectado'}</p>
-              <button className="w-full mt-1 border p-1 text-xs" onClick={disconnectDrive}>Desconectar Drive</button>
-            </div>
-          ) : (
-            <button className="w-full mb-2 border p-1" onClick={connectDrive}>☁️ Conectar Google Drive</button>
-          ))}
+          <button className="w-full mb-2 border p-1" onClick={() => setShowSettings(true)}>⚙️ Configuracion</button>
           <p className="truncate">{user?.nickname || user?.name}</p>
           <button className="w-full mt-1 border p-1"
             onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>

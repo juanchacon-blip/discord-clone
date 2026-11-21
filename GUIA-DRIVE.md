@@ -61,7 +61,7 @@ En Environment agrega: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIR
 
 ## Probar
 
-1. Entra a la app -> "☁️ Conectar Google Drive" -> acepta en Google -> vuelves al chat.
+1. Entra a la app -> "⚙️ Configuracion" -> "Vincular mi cuenta de Google Drive" -> acepta en Google -> vuelves al chat.
 2. Sube una foto: se ve en el chat y debajo dice "respaldado en tu Drive".
 3. Revisa tu Drive: carpeta "Discord Clone - Respaldo".
 4. Con otra cuenta SIN Drive: sube una foto; se ve igual para todos, sin etiqueta de respaldo.
