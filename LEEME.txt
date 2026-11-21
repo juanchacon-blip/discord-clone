@@ -36,6 +36,15 @@ PERMISOS
   canales, mensajes e imagenes. Ver GUIA-ADMIN.md
 
 ==============================================================
+DISEÑO (frontend)
+==============================================================
+- Tema "Nebula": oscuro, violetas profundos, violeta electrico y lavanda, con glassmorphism.
+- Colores, animaciones y efectos: frontend/src/index.css (seccion @theme y @layer components).
+- Piezas reutilizables (fondo animado, tarjetas Bento, anillo de progreso, avatar): frontend/src/components/ui.tsx
+- Pantallas: App.tsx (bienvenida), components/Home.tsx (panel de inicio), ChannelChat.tsx,
+  Settings.tsx y AdminPanel.tsx.
+
+==============================================================
 NOTIFICACIONES
 ==============================================================
 - Bolita roja con el numero de mensajes sin leer al lado de cada canal (el nombre se pone en negrita).

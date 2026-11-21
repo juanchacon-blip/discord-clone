@@ -1,1 +1,142 @@
 @import "tailwindcss";
+
+/* ───────── Tema "Nebula": violetas profundos, violeta eléctrico, lavanda y brillos ───────── */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-void: #06030f;
+  --color-ink: #0c0618;
+  --color-electric: #8b5cf6;
+  --color-lavender: #c4b5fd;
+  --color-glow: #e879f9;
+
+  --animate-float: float 11s ease-in-out infinite;
+  --animate-float-slow: float 17s ease-in-out infinite reverse;
+  --animate-rise: rise .65s cubic-bezier(.2, .8, .2, 1) both;
+  --animate-pop: pop .4s cubic-bezier(.2, 1.3, .4, 1) both;
+  --animate-fade: fade .3s ease both;
+  --animate-shimmer: shimmer 7s linear infinite;
+  --animate-dot: dot 1.2s ease-in-out infinite;
+  --animate-bars: bars 1.5s ease-in-out infinite;
+  --animate-ping-soft: pingsoft 2s ease-out infinite;
+
+  @keyframes float { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(48px, -36px, 0) scale(1.12); } }
+  /* Se anima "translate" y "scale" (no "transform") para no pelear con los efectos hover */
+  @keyframes rise { from { opacity: 0; translate: 0 16px; scale: .97; } to { opacity: 1; translate: 0 0; scale: 1; } }
+  @keyframes pop { from { opacity: 0; scale: .9; } to { opacity: 1; scale: 1; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes shimmer { to { background-position: 300% 0; } }
+  @keyframes dot { 0%, 80%, 100% { transform: translateY(0); opacity: .4; } 40% { transform: translateY(-5px); opacity: 1; } }
+  @keyframes bars { 0%, 100% { transform: scaleY(.22); } 50% { transform: scaleY(1); } }
+  @keyframes pingsoft { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.6); opacity: 0; } }
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--color-void);
+  color: #ede9fe;
+  font-family: var(--font-sans);
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: rgba(139, 92, 246, .55); color: #fff; }
+* { scrollbar-width: thin; scrollbar-color: rgba(139, 92, 246, .55) transparent; }
+
+@layer components {
+  /* Glassmorphism */
+  .glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .025));
+    border: 1px solid rgba(196, 181, 253, .16);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .13), 0 18px 50px -18px rgba(76, 29, 149, .7);
+  }
+  .glass-deep {
+    background: linear-gradient(160deg, rgba(24, 10, 48, .72), rgba(9, 4, 22, .78));
+    border: 1px solid rgba(167, 139, 250, .16);
+    backdrop-filter: blur(26px) saturate(160%);
+    -webkit-backdrop-filter: blur(26px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 24px 60px -20px rgba(0, 0, 0, .8);
+  }
+
+  /* Bento: tarjeta con foco de luz que sigue al cursor */
+  .bento {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    transition: transform .4s cubic-bezier(.2, .8, .2, 1), border-color .3s, box-shadow .4s;
+  }
+  .bento > * { position: relative; }
+  .bento::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(440px circle at var(--mx, 50%) var(--my, 50%), rgba(167, 139, 250, .32), transparent 45%);
+    opacity: 0;
+    transition: opacity .35s;
+    pointer-events: none;
+  }
+  .bento:hover {
+    transform: translateY(-5px);
+    border-color: rgba(216, 180, 254, .45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 26px 60px -16px rgba(139, 92, 246, .55);
+  }
+  .bento:hover::before { opacity: 1; }
+
+  /* Botones */
+  .btn-glow {
+    background: linear-gradient(135deg, #7c3aed, #a855f7 55%, #d946ef);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 10px 30px -8px rgba(168, 85, 247, .75);
+    transition: transform .2s, box-shadow .25s, filter .2s;
+  }
+  .btn-glow:hover { transform: translateY(-1px); filter: brightness(1.12); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), 0 14px 40px -6px rgba(217, 70, 239, .8); }
+  .btn-glow:active { transform: scale(.97); }
+  .btn-glow:disabled, .btn-ghost:disabled { opacity: .5; pointer-events: none; }
+  .btn-ghost {
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(196, 181, 253, .16);
+    color: #ddd6fe;
+    transition: background .2s, border-color .2s, color .2s, transform .15s;
+  }
+  .btn-ghost:hover { background: rgba(139, 92, 246, .22); border-color: rgba(196, 181, 253, .4); color: #fff; }
+  .btn-ghost:active { transform: scale(.97); }
+  .btn-danger {
+    background: rgba(244, 63, 94, .1);
+    border: 1px solid rgba(251, 113, 133, .35);
+    color: #fda4af;
+    transition: background .2s, color .2s, transform .15s;
+  }
+  .btn-danger:hover { background: rgba(244, 63, 94, .28); color: #fff; }
+  .btn-danger:active { transform: scale(.97); }
+  .btn-danger:disabled { opacity: .5; pointer-events: none; }
+
+  .input-glass {
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(196, 181, 253, .18);
+    color: #f5f3ff;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+  }
+  .input-glass::placeholder { color: rgba(196, 181, 253, .42); }
+  .input-glass:focus { border-color: #a78bfa; background: rgba(255, 255, 255, .09); box-shadow: 0 0 0 4px rgba(139, 92, 246, .22); }
+
+  .text-gradient {
+    background: linear-gradient(90deg, #c4b5fd, #e879f9, #8b5cf6, #c4b5fd);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 7s linear infinite;
+  }
+  .aurora-grid {
+    background-image: linear-gradient(rgba(196, 181, 253, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(196, 181, 253, .05) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}

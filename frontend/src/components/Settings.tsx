@@ -87,23 +87,23 @@ export default function Settings({ authFetch, onClose, driveResult }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3" onClick={onClose}>
-      <div className="w-full max-w-lg max-h-full overflow-y-auto rounded bg-white p-4 text-black" onClick={e => e.stopPropagation()}>
+    <div className="animate-fade fixed inset-0 z-50 flex items-center justify-center bg-void/70 p-3 backdrop-blur-sm" onClick={onClose}>
+      <div className="glass-deep animate-pop max-h-full w-full max-w-lg overflow-y-auto rounded-3xl p-5 text-violet-50 md:p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">⚙️ Configuracion</h2>
-          <button className="border px-2" onClick={onClose} aria-label="Cerrar">✕</button>
+          <h2 className="text-gradient text-2xl font-extrabold">⚙️ Configuración</h2>
+          <button className="btn-ghost grid h-9 w-9 place-items-center rounded-full" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
 
-        <section className="mt-4">
-          <h3 className="font-bold">Cuenta</h3>
+        <section className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-[.18em] text-lavender">Cuenta</h3>
           <p>{user?.nickname || user?.name}</p>
-          {user?.email && <p className="text-sm text-gray-600">{user.email}</p>}
-          {user?.sub && <p className="mt-1 break-all text-xs text-gray-500">ID de cuenta: {user.sub}</p>}
+          {user?.email && <p className="text-sm text-violet-200/70">{user.email}</p>}
+          {user?.sub && <p className="mt-1 break-all text-xs text-violet-300/50">ID de cuenta: {user.sub}</p>}
         </section>
 
-        <section className="mt-5 border-t pt-4">
-          <h3 className="font-bold">☁️ Respaldo en Google Drive</h3>
-          <p className="mt-1 text-sm text-gray-700">
+        <section className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-[.18em] text-lavender">☁️ Respaldo en Google Drive</h3>
+          <p className="mt-1 text-sm text-violet-200/80">
             Si conectas tu Drive, <b>todas las imagenes de todos los canales</b> (las tuyas y las de los demas,
             tambien las que ya estaban antes de que te conectaras) se copian a tu Drive, en una carpeta llamada{' '}
             <b>"Discord Clone - Respaldo"</b>. Ocupan espacio de tu Drive. Los archivos que no son imagenes solo
@@ -111,21 +111,21 @@ export default function Settings({ authFetch, onClose, driveResult }: Props) {
             resto de tu Drive. Puedes desconectarlo cuando quieras.
           </p>
 
-          {driveResult === 'ok' && <p className="mt-2 rounded bg-green-100 p-2 text-sm">✅ Google Drive conectado.</p>}
+          {driveResult === 'ok' && <p className="mt-2 rounded-xl border border-emerald-300/25 bg-emerald-400/15 text-emerald-100 p-2 text-sm">✅ Google Drive conectado.</p>}
           {driveResult === 'error' && (
-            <p className="mt-2 rounded bg-red-100 p-2 text-sm">
+            <p className="mt-2 rounded-xl border border-rose-300/25 bg-rose-500/15 text-rose-100 p-2 text-sm">
               ❌ No se pudo conectar. Asegurate de dejar marcado el permiso de Drive en la pantalla de Google e intenta otra vez.
             </p>
           )}
           {loadError && (
-            <p className="mt-2 rounded bg-red-100 p-2 text-sm">
+            <p className="mt-2 rounded-xl border border-rose-300/25 bg-rose-500/15 text-rose-100 p-2 text-sm">
               No se pudo consultar el estado de Drive ({loadError}). Revisa que el servidor este actualizado y encendido.
             </p>
           )}
-          {!drive && !loadError && <p className="mt-2 text-sm text-gray-500">Consultando...</p>}
+          {!drive && !loadError && <p className="mt-2 text-sm text-violet-300/50">Consultando...</p>}
 
           {drive && !drive.enabled && (
-            <div className="mt-2 rounded bg-yellow-100 p-2 text-sm">
+            <div className="mt-2 rounded-xl border border-amber-300/25 bg-amber-400/15 text-amber-100 p-2 text-sm">
               <p><b>Drive aun no esta configurado en el servidor.</b> Falta agregar estas variables de entorno (en Render, seccion Environment):</p>
               <ul className="mt-1 list-disc pl-5">
                 {drive.missing?.map(name => <li key={name}><code>{name}</code></li>)}
@@ -134,39 +134,43 @@ export default function Settings({ authFetch, onClose, driveResult }: Props) {
           )}
 
           {drive?.enabled && !drive.connected && (
-            <button className="mt-3 w-full border border-black p-2 hover:bg-gray-100 disabled:opacity-50" disabled={busy} onClick={connect}>
+            <button className="btn-glow mt-3 w-full rounded-2xl p-3 font-semibold" disabled={busy} onClick={connect}>
               {busy ? 'Abriendo Google...' : 'Vincular mi cuenta de Google Drive'}
             </button>
           )}
 
           {drive?.enabled && drive.connected && (
             <div className="mt-3">
-              <p className="rounded bg-green-100 p-2 text-sm">
+              <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/15 text-emerald-100 p-2 text-sm">
                 ✅ Conectado{drive.email ? <> como <b>{drive.email}</b></> : null}
               </p>
               {drive.images && (
-                <div className="mt-2 rounded border p-2 text-sm">
+                <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm">
                   <p>
                     🖼️ Imagenes respaldadas: <b>{drive.images.ok}</b> de <b>{drive.images.total}</b>
                     {drive.images.pending > 0 && <span> · ⏳ {drive.images.pending} en proceso</span>}
                     {drive.images.failed > 0 && <span> · ⚠️ {drive.images.failed} fallaron</span>}
-                    {drive.images.missing > 0 && <span className="text-gray-500"> · {drive.images.missing} ya no existen en el servidor</span>}
+                    {drive.images.missing > 0 && <span className="text-violet-300/50"> · {drive.images.missing} ya no existen en el servidor</span>}
                   </p>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-400 to-fuchsia-400 shadow-[0_0_12px_rgba(217,70,239,.7)] transition-all duration-1000"
+                      style={{ width: `${drive.images.total ? Math.round((drive.images.ok / drive.images.total) * 100) : 0}%` }} />
+                  </div>
                   {drive.images.ok + drive.images.missing < drive.images.total && drive.images.pending === 0 && (
-                    <button className="mt-2 w-full border p-1 hover:bg-gray-100 disabled:opacity-50" disabled={busy} onClick={() => backfill()}>
+                    <button className="btn-ghost mt-2 w-full rounded-xl p-2 text-sm" disabled={busy} onClick={() => backfill()}>
                       Respaldar las imagenes que faltan
                     </button>
                   )}
                 </div>
               )}
-              <button className="mt-2 w-full border p-2 hover:bg-gray-100 disabled:opacity-50" disabled={busy} onClick={disconnect}>
+              <button className="btn-ghost mt-2 w-full rounded-2xl p-2.5" disabled={busy} onClick={disconnect}>
                 Desvincular mi Google Drive
               </button>
             </div>
           )}
 
-          {info && <p className="mt-2 rounded bg-blue-100 p-2 text-sm">{info}</p>}
-          {error && <p className="mt-2 rounded bg-red-100 p-2 text-sm">{error}</p>}
+          {info && <p className="mt-2 rounded-xl border border-sky-300/25 bg-sky-400/15 text-sky-100 p-2 text-sm">{info}</p>}
+          {error && <p className="mt-2 rounded-xl border border-rose-300/25 bg-rose-500/15 text-rose-100 p-2 text-sm">{error}</p>}
         </section>
       </div>
     </div>
