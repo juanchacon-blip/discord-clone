@@ -78,6 +78,16 @@ export class ChannelsGateway implements OnGatewayInit {
     this.server.to(`channel:${msg.channelId}`).emit('message', msg);
   }
 
+  /** Avisa a todos los que estan en un canal (mensaje borrado o editado por un admin). */
+  emitToChannel(channelId: number, event: string, payload: unknown) {
+    this.server.to(`channel:${channelId}`).emit(event, payload);
+  }
+
+  /** Saca a todos los sockets de la sala de un canal que ya no existe. */
+  dropChannel(channelId: number) {
+    this.server.in(`channel:${channelId}`).socketsLeave(`channel:${channelId}`);
+  }
+
   /** Solo la cuenta que subio el archivo se entera de si el respaldo en Drive salio bien. */
   notifyBackup(sub: string, info: { id: number; channelId: number; driveStatus: 'ok' | 'failed' }) {
     this.server.to(`user:${sub}`).emit('message:backup', info);

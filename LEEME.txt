@@ -31,8 +31,9 @@ Notas:
 ==============================================================
 PERMISOS
 ==============================================================
-- No hay roles: todos los usuarios que inician sesion con Auth0 pueden ver
-  todos los canales, crear canales, escribir y subir archivos.
+- Usuarios normales: ven todos los canales, crean canales, escriben y suben archivos.
+- Administrador (ADMIN_EMAILS en el .env / en Render): ademas tiene un panel aparte para eliminar
+  canales, mensajes e imagenes. Ver GUIA-ADMIN.md
 
 ==============================================================
 FOTOS Y RESPALDO EN GOOGLE DRIVE

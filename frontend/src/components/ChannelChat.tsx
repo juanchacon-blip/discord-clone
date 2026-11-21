@@ -2,10 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { io, Socket } from 'socket.io-client';
 import Settings from './Settings';
-
-// En desarrollo apunta a http://localhost:3000 (ver .env).
-// En produccion queda vacio: el backend sirve el frontend, asi que usa el mismo dominio.
-const API: string = import.meta.env.VITE_API_URL || '';
+import { API, fileHref, useAuthFetch } from '../api';
 
 type DriveStatus = 'pending' | 'ok' | 'failed' | null;
 type Msg = {
@@ -13,8 +10,6 @@ type Msg = {
   fileName?: string; fileUrl?: string; mimeType?: string; driveStatus?: DriveStatus;
 };
 
-// Con Supabase la URL ya viene completa (https://...); con disco local es relativa al backend.
-const fileHref = (url: string) => (url.startsWith('http') ? url : `${API}${url}`);
 const BACKUP_LABEL: Record<string, string> = {
   pending: '☁️ respaldando en tu Drive...',
   ok: '☁️ respaldado en tu Drive',
@@ -23,7 +18,7 @@ const BACKUP_LABEL: Record<string, string> = {
 type Channel = { id: number; name: string };
 type Aviso = { text: string; channelId?: number };
 
-export default function ChannelChat() {
+export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean; onOpenAdmin: () => void }) {
   const { getAccessTokenSilently, logout, user } = useAuth0();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -39,14 +34,7 @@ export default function ChannelChat() {
   const [driveResult] = useState(() => new URLSearchParams(window.location.search).get('drive'));
   const lastTyping = useRef(0);
 
-  // fetch que agrega el token de Auth0
-  const authFetch = useCallback(async (path: string, init: RequestInit = {}) => {
-    const token = await getAccessTokenSilently();
-    return fetch(`${API}${path}`, {
-      ...init,
-      headers: { ...(init.headers as Record<string, string>), Authorization: `Bearer ${token}` },
-    });
-  }, [getAccessTokenSilently]);
+  const authFetch = useAuthFetch();
 
   // Conexion del socket: el token se pide en cada (re)conexion.
   useEffect(() => {
@@ -117,13 +105,20 @@ export default function ChannelChat() {
     // Solo llega a quien subio el archivo: como va su respaldo en Drive.
     const onBackup = (b: { id: number; driveStatus: DriveStatus }) =>
       setMessages(prev => prev.map(m => (m.id === b.id ? { ...m, driveStatus: b.driveStatus } : m)));
+    // Un administrador borro un mensaje, o solo su archivo.
+    const onDeleted = (d: { id: number }) => setMessages(prev => prev.filter(m => m.id !== d.id));
+    const onUpdated = (u: Msg) => setMessages(prev => prev.map(m => (m.id === u.id ? u : m)));
     socket.on('message', onMessage);
     socket.on('typing', onTyping);
     socket.on('message:backup', onBackup);
+    socket.on('message:deleted', onDeleted);
+    socket.on('message:updated', onUpdated);
     return () => {
       socket.off('message', onMessage);
       socket.off('typing', onTyping);
       socket.off('message:backup', onBackup);
+      socket.off('message:deleted', onDeleted);
+      socket.off('message:updated', onUpdated);
     };
   }, [socket, active, channels]);
 
@@ -208,6 +203,7 @@ export default function ChannelChat() {
           <button className="w-full mt-1 border p-1" onClick={createChannel}>Crear canal</button>
         </div>
         <div className="mt-2 text-sm">
+          {isAdmin && <button className="w-full mb-2 border border-yellow-400 p-1 text-yellow-300" onClick={onOpenAdmin}>🛡️ Administracion</button>}
           <button className="w-full mb-2 border p-1" onClick={() => setShowSettings(true)}>⚙️ Configuracion</button>
           <p className="truncate">{user?.nickname || user?.name}</p>
           <button className="w-full mt-1 border p-1"

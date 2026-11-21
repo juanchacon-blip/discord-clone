@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
+import { unlink, writeFile } from 'fs/promises';
+import { basename, join } from 'path';
 import { UPLOAD_DIR } from '../channels/uploads';
 
 /**
@@ -49,5 +49,34 @@ export class StorageService {
     }
     // El bucket debe ser PUBLICO para que las URLs funcionen en <img>.
     return `${this.url}/storage/v1/object/public/${this.bucket}/${storageKey}`;
+  }
+
+  /**
+   * Borra un archivo a partir de la URL guardada en el mensaje.
+   * Si ya no existe se considera borrado. Si el almacenamiento falla, lanza error.
+   */
+  async remove(fileUrl: string): Promise<void> {
+    // Archivo en disco local (subidas antiguas o modo desarrollo)
+    if (fileUrl.startsWith('/uploads/')) {
+      await unlink(join(UPLOAD_DIR, basename(fileUrl))).catch((e) => {
+        if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+      });
+      return;
+    }
+    const prefix = `${this.url}/storage/v1/object/public/${this.bucket}/`;
+    if (!this.remote || !fileUrl.startsWith(prefix)) {
+      this.logger.warn(`No se sabe borrar este archivo (no es de este almacenamiento): ${fileUrl.slice(0, 80)}`);
+      return;
+    }
+    const key = fileUrl.slice(prefix.length);
+    const res = await fetch(`${this.url}/storage/v1/object/${this.bucket}/${key}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${this.key}`, apikey: this.key },
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      if (res.status === 404 || /not.?found/i.test(body)) return;
+      throw new Error(`Supabase Storage respondio ${res.status}: ${body.slice(0, 200)}`);
+    }
   }
 }

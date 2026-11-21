@@ -70,6 +70,7 @@ export default function Settings({ authFetch, onClose, driveResult }: Props) {
           <h3 className="font-bold">Cuenta</h3>
           <p>{user?.nickname || user?.name}</p>
           {user?.email && <p className="text-sm text-gray-600">{user.email}</p>}
+          {user?.sub && <p className="mt-1 break-all text-xs text-gray-500">ID de cuenta: {user.sub}</p>}
         </section>
 
         <section className="mt-5 border-t pt-4">

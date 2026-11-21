@@ -11,5 +11,6 @@ import { StorageService } from '../storage/storage.service';
   imports: [DriveModule],
   controllers: [ChannelsController],
   providers: [ChannelsService, ChannelsGateway, PrismaService, AuthService, StorageService],
+  exports: [ChannelsGateway, StorageService],
 })
 export class ChannelsModule {}
