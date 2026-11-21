@@ -112,3 +112,13 @@ No uses la base Postgres gratis de Render: se borra a los 30 dias. Por eso Neon.
 - Si quieres separar frontend y backend en dos sitios distintos, pon en el
   frontend VITE_API_URL=https://tu-backend y en el backend
   FRONTEND_URL=https://tu-frontend (se pueden poner varias separadas por coma).
+
+
+==============================================================
+SI RENDER FALLA AL DESPLEGAR CON "P1002 ... pg_advisory_lock"
+==============================================================
+- Causa: las migraciones no funcionan a traves del host "-pooler" de Neon. Ya se arregla solo: backend/start.sh
+  migra usando el host directo (sin "-pooler") y la app sigue usando DATABASE_URL normal.
+- Si aun asi falla una vez, puede haber un candado atascado de intentos anteriores. En Neon -> SQL Editor ejecuta:
+    SELECT pg_terminate_backend(pid) FROM pg_locks WHERE locktype = 'advisory' AND pid <> pg_backend_pid();
+  y vuelve a desplegar en Render (Manual Deploy -> Deploy latest commit).
