@@ -33,9 +33,54 @@ export class ChannelsService {
     return { id: c.id, name: c.name };
   }
 
-  async findAll() {
-    const list = await this.prisma.channel.findMany({ orderBy: { id: 'asc' } });
-    return list.map(c => ({ id: c.id, name: c.name }));
+  /** Canales de la cuenta, cada uno con cuantos mensajes ajenos lleva sin leer. */
+  async findAll(sub: string) {
+    const channels = await this.prisma.channel.findMany({ orderBy: { id: 'asc' } });
+    const reads = await this.prisma.channelRead.findMany({ where: { sub } });
+    const lastRead = new Map<number, number>(reads.map((r) => [r.channelId, r.lastReadId]));
+
+    // Primera vez que esta cuenta ve un canal: lo que ya habia cuenta como leido
+    // (si no, al estrenar esta funcion saldrian cientos de "no leidos" viejos).
+    const fresh = channels.filter((c) => !lastRead.has(c.id));
+    if (fresh.length) {
+      const maxes = await this.prisma.message.groupBy({
+        by: ['channelId'],
+        where: { channelId: { in: fresh.map((c) => c.id) } },
+        _max: { id: true },
+      });
+      const maxBy = new Map<number, number>(maxes.map((m) => [m.channelId, m._max.id ?? 0]));
+      await this.prisma.channelRead.createMany({
+        data: fresh.map((c) => ({ sub, channelId: c.id, lastReadId: maxBy.get(c.id) ?? 0 })),
+        skipDuplicates: true,
+      });
+      for (const c of fresh) lastRead.set(c.id, maxBy.get(c.id) ?? 0);
+    }
+
+    const counts = await Promise.all(
+      channels.map((c) =>
+        this.prisma.message.count({
+          where: {
+            channelId: c.id,
+            id: { gt: lastRead.get(c.id) ?? 0 },
+            // Tus propios mensajes no cuentan como "sin leer" (los antiguos no tienen autor guardado).
+            OR: [{ authorSub: null }, { authorSub: { not: sub } }],
+          },
+        }),
+      ),
+    );
+    return channels.map((c, i) => ({ id: c.id, name: c.name, unread: counts[i] }));
+  }
+
+  /** Marca el canal como leido hasta su ultimo mensaje. */
+  async markRead(sub: string, channelId: number) {
+    await this.assertExists(channelId);
+    const max = await this.prisma.message.aggregate({ where: { channelId }, _max: { id: true } });
+    const lastReadId = max._max.id ?? 0;
+    await this.prisma.channelRead.upsert({
+      where: { sub_channelId: { sub, channelId } },
+      create: { sub, channelId, lastReadId },
+      update: { lastReadId },
+    });
   }
 
   async allIds(): Promise<number[]> {

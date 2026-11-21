@@ -15,7 +15,7 @@ const BACKUP_LABEL: Record<string, string> = {
   ok: '☁️ respaldado en tu Drive',
   failed: '⚠️ no se pudo respaldar en tu Drive',
 };
-type Channel = { id: number; name: string };
+type Channel = { id: number; name: string; unread?: number };
 type Aviso = { text: string; channelId?: number };
 
 export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean; onOpenAdmin: () => void }) {
@@ -53,12 +53,35 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
       .then(r => (r.ok ? r.json() : []))
       .then((list: Channel[]) => {
         setChannels(list);
+        // El servidor es quien recuerda que leiste: asi la bolita sobrevive a recargar o cerrar la pestaña.
+        setUnread(Object.fromEntries(list.map(c => [c.id, c.unread ?? 0])));
         setActive(a => (a && list.some(c => c.id === a.id) ? a : null));
       })
       .catch(() => setChannels([]));
   }, [authFetch]);
 
   useEffect(() => { reload(); }, [reload]);
+
+  // Le dice al servidor que ya leiste el canal (solo si la pestaña esta a la vista).
+  const markRead = useCallback((id: number) => {
+    if (document.visibilityState !== 'visible') return;
+    authFetch(`/channels/${id}/read`, { method: 'POST' }).catch(() => undefined);
+  }, [authFetch]);
+
+  // Al volver a la pestaña, lo del canal abierto cuenta como leido.
+  useEffect(() => {
+    const onVisible = () => { if (active) markRead(active.id); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [active, markRead]);
+
+  // Total sin leer en el titulo de la pestaña: "(3) Discord Clone"
+  const baseTitle = useRef(document.title);
+  const totalUnread = channels.reduce((n, c) => n + (c.id === active?.id ? 0 : unread[c.id] || 0), 0);
+  useEffect(() => {
+    document.title = totalUnread > 0 ? `(${totalUnread}) ${baseTitle.current}` : baseTitle.current;
+  }, [totalUnread]);
+  useEffect(() => () => { document.title = baseTitle.current; }, []);
 
   // Limpia ?drive=... de la URL y abre Configuracion si venimos de Google
   useEffect(() => {
@@ -92,6 +115,9 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
     const onMessage = (m: Msg) => {
       if (m.channelId === active?.id) {
         setMessages(prev => [...prev, m]);
+        // Quien acaba de enviar ya no esta "escribiendo".
+        setTyping(prev => Object.fromEntries(Object.entries(prev).filter(([name]) => name !== m.author)));
+        markRead(m.channelId);
         return;
       }
       setUnread(u => ({ ...u, [m.channelId]: (u[m.channelId] || 0) + 1 }));
@@ -120,7 +146,7 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
       socket.off('message:deleted', onDeleted);
       socket.off('message:updated', onUpdated);
     };
-  }, [socket, active, channels]);
+  }, [socket, active, channels, markRead]);
 
   // Los avisos y los "escribiendo..." desaparecen solos.
   useEffect(() => {
@@ -144,6 +170,7 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
     setActive(c);
     setTyping({});
     setUnread(u => ({ ...u, [c.id]: 0 }));
+    markRead(c.id);
   };
 
   const send = () => {
@@ -191,12 +218,21 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
       {showSettings && <Settings authFetch={authFetch} driveResult={driveResult} onClose={() => setShowSettings(false)} />}
       <aside className="w-32 md:w-48 bg-gray-800 text-white p-2 flex flex-col">
         <div className="flex-1">
-          {channels.map(c => (
-            <button key={c.id} onClick={() => openChannel(c)} className="block w-full text-left p-1 hover:bg-gray-700">
-              # {c.name}
-              {unread[c.id] > 0 && <span className="ml-1 rounded-full bg-red-600 px-2 text-xs">{unread[c.id]}</span>}
-            </button>
-          ))}
+          {channels.map(c => {
+            const n = c.id === active?.id ? 0 : unread[c.id] || 0;
+            return (
+              <button key={c.id} onClick={() => openChannel(c)}
+                className={`flex w-full items-center justify-between gap-1 p-1 text-left hover:bg-gray-700 ${c.id === active?.id ? 'bg-gray-700' : ''} ${n > 0 ? 'font-bold' : 'text-gray-300'}`}>
+                <span className="truncate"># {c.name}</span>
+                {n > 0 && (
+                  <span className="min-w-5 shrink-0 rounded-full bg-red-600 px-1.5 text-center text-xs font-bold text-white"
+                    title={`${n} mensaje(s) sin leer`}>
+                    {n > 99 ? '99+' : n}
+                  </span>
+                )}
+              </button>
+            );
+          })}
           <input className="w-full mt-2 p-1 text-black" placeholder="nuevo canal" value={newName}
             onChange={e => setNewName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && createChannel()} />
@@ -238,8 +274,13 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
             </div>
           ))}
         </div>
-        <p className="px-2 text-sm text-gray-500 h-5">
-          {typers.length > 0 && `${typers.join(', ')} ${typers.length === 1 ? 'esta' : 'estan'} escribiendo...`}
+        <p className="h-6 px-3 text-sm italic text-gray-700">
+          {typers.length > 0 && (
+            <>
+              <span className="mr-1 inline-block animate-pulse">✍️</span>
+              <b>{typers.join(', ')}</b> {typers.length === 1 ? 'está' : 'están'} escribiendo…
+            </>
+          )}
         </p>
         <div className="flex p-2 gap-2">
           <label className="border px-3 cursor-pointer">

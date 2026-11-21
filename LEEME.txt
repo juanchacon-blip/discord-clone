@@ -36,6 +36,15 @@ PERMISOS
   canales, mensajes e imagenes. Ver GUIA-ADMIN.md
 
 ==============================================================
+NOTIFICACIONES
+==============================================================
+- Bolita roja con el numero de mensajes sin leer al lado de cada canal (el nombre se pone en negrita).
+  El servidor recuerda lo que ya leiste, asi que se mantiene aunque recargues o cierres la pestaña.
+  Tus propios mensajes no cuentan. El total tambien aparece en el titulo de la pestaña: "(3) ...".
+- "Fulano esta escribiendo..." encima de la caja de texto cuando alguien escribe en el canal que tienes abierto.
+- Al actualizar corre:  cd backend && npx prisma migrate dev   (en Render se aplica sola)
+
+==============================================================
 FOTOS Y RESPALDO EN GOOGLE DRIVE
 ==============================================================
 - Cada cuenta puede conectar SU Google Drive (boton en la barra izquierda) y sus archivos

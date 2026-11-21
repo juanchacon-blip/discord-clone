@@ -1,5 +1,5 @@
 import {
-  BadRequestException, Body, Controller, Get, Logger, Param, ParseIntPipe, Post, Req,
+  BadRequestException, Body, Controller, Get, HttpCode, Logger, Param, ParseIntPipe, Post, Req,
   UploadedFile, UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -36,8 +36,14 @@ export class ChannelsController {
   }
 
   @Get()
-  list() {
-    return this.channels.findAll();
+  list(@Req() req: Req_) {
+    return this.channels.findAll(req.user.sub);
+  }
+
+  @Post(':id/read')
+  @HttpCode(204)
+  async markRead(@Param('id', ParseIntPipe) id: number, @Req() req: Req_) {
+    await this.channels.markRead(req.user.sub, id);
   }
 
   @Get(':id/messages')

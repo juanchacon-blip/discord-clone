@@ -12,6 +12,7 @@ model Channel {
   name      String
   messages  Message[]
   roles     ChannelRole[]
+  reads     ChannelRead[]
   createdAt DateTime  @default(now())
 }
 
@@ -70,4 +71,14 @@ model DriveConnection {
   refreshToken String   // cifrado (AES-256-GCM)
   folderId     String?
   createdAt    DateTime @default(now())
+}
+
+// Hasta que mensaje leyo cada cuenta en cada canal (sirve para la "bolita" de mensajes sin leer).
+model ChannelRead {
+  sub        String
+  channelId  Int
+  lastReadId Int     @default(0)
+  channel    Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@id([sub, channelId])
 }
