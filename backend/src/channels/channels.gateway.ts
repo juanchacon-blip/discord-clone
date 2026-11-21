@@ -59,7 +59,8 @@ export class ChannelsGateway implements OnGatewayInit {
       if (!client.rooms.has(`channel:${dto.channelId}`)) return;
       // El autor sale del token, NUNCA de lo que mande el navegador.
       const user = client.data.user as AuthUser;
-      const msg = await this.channels.createMessage(dto.channelId, user.name, dto.content, user.sub);
+      // El nombre se consulta en cada mensaje: asi un cambio de nombre vale sin reconectar.
+      const msg = await this.channels.createMessage(dto.channelId, await this.auth.displayName(user.sub), dto.content, user.sub);
       this.broadcast(toPublic(msg));
     } catch (e) {
       this.logger.error(`Fallo al enviar mensaje: ${(e as Error).message}`);
@@ -67,11 +68,16 @@ export class ChannelsGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage('typing')
-  typing(@ConnectedSocket() client: Socket, @MessageBody() channelId: number) {
+  async typing(@ConnectedSocket() client: Socket, @MessageBody() channelId: number) {
     const room = `channel:${channelId}`;
     if (!client.rooms.has(room)) return;
     const user = client.data.user as AuthUser;
-    client.to(room).emit('typing', { channelId, name: user.name });
+    client.to(room).emit('typing', { channelId, name: await this.auth.displayName(user.sub) });
+  }
+
+  /** Alguien cambio su nombre: los clientes vuelven a pedir el historial del canal abierto. */
+  announceRenamed() {
+    this.server.emit('messages:refresh');
   }
 
   broadcast(msg: { channelId: number }) {

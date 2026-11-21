@@ -45,6 +45,14 @@ DISEÑO (frontend)
   Settings.tsx y AdminPanel.tsx.
 
 ==============================================================
+NOMBRE DE USUARIO
+==============================================================
+- Cada persona elige su nombre en ⚙️ Configuracion -> "Tu nombre" (2 a 24 caracteres: letras, numeros,
+  espacios y . _ -). No puede repetirse (sin importar mayusculas ni tildes) ni usar nombres reservados
+  (admin, sistema...). Sus mensajes anteriores se actualizan. Puede volver al nombre de su cuenta.
+- Al actualizar corre:  cd backend && npx prisma migrate dev   (en Render se aplica sola)
+
+==============================================================
 NOTIFICACIONES
 ==============================================================
 - Bolita roja con el numero de mensajes sin leer al lado de cada canal (el nombre se pone en negrita).

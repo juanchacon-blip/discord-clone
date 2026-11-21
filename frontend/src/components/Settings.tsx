@@ -4,20 +4,29 @@ import { useAuth0 } from '@auth0/auth0-react';
 type ImageStats = { total: number; ok: number; pending: number; failed: number; missing: number };
 type DriveInfo = { enabled: boolean; connected: boolean; email?: string | null; missing?: string[]; images?: ImageStats };
 
+type ProfileInfo = { name: string; custom: string | null; defaultName: string };
+const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]*$/u;
+const cleanName = (s: string) => s.replace(/\s+/g, ' ').trim();
+
 type Props = {
+  onNameChange?: (name: string) => void;
   authFetch: (path: string, init?: RequestInit) => Promise<Response>;
   onClose: () => void;
   /** Resultado de volver de Google: 'ok' | 'error' (viene en la URL como ?drive=...) */
   driveResult?: string | null;
 };
 
-export default function Settings({ authFetch, onClose, driveResult }: Props) {
+export default function Settings({ authFetch, onClose, driveResult, onNameChange }: Props) {
   const { user } = useAuth0();
   const [drive, setDrive] = useState<DriveInfo | null>(null);
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [profile, setProfile] = useState<ProfileInfo | null>(null);
+  const [nameInput, setNameInput] = useState('');
+  const [nameBusy, setNameBusy] = useState(false);
+  const [nameNotice, setNameNotice] = useState<{ ok: boolean; text: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -31,6 +40,41 @@ export default function Settings({ authFetch, onClose, driveResult }: Props) {
   }, [authFetch]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Nombre que se muestra en el chat
+  useEffect(() => {
+    authFetch('/profile')
+      .then(r => (r.ok ? r.json() : null))
+      .then((p: ProfileInfo | null) => { if (p) { setProfile(p); setNameInput(p.name); } })
+      .catch(() => undefined);
+  }, [authFetch]);
+
+  const wanted = cleanName(nameInput);
+  const nameError = wanted.length < 2 ? 'Mínimo 2 caracteres' : wanted.length > 24 ? 'Máximo 24 caracteres' : !NAME_RE.test(wanted) ? 'Solo letras, números, espacios y . _ -' : '';
+  const canSave = !nameBusy && !nameError && wanted !== profile?.name;
+
+  const sendName = async (method: 'PUT' | 'DELETE') => {
+    setNameBusy(true);
+    setNameNotice(null);
+    try {
+      const res = await authFetch('/profile', method === 'PUT'
+        ? { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: wanted }) }
+        : { method });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg = Array.isArray(body?.message) ? body.message[0] : body?.message;
+        setNameNotice({ ok: false, text: msg || `No se pudo guardar (${res.status})` });
+      } else {
+        setProfile(body);
+        setNameInput(body.name);
+        onNameChange?.(body.name);
+        setNameNotice({ ok: true, text: method === 'PUT' ? '¡Listo! Ya te ven con tu nuevo nombre.' : 'Volviste al nombre de tu cuenta.' });
+      }
+    } catch {
+      setNameNotice({ ok: false, text: 'No se pudo conectar con el servidor.' });
+    }
+    setNameBusy(false);
+  };
 
   // Pide al servidor que copie a MI Drive las imagenes que me faltan
   const backfill = useCallback(async (silent = false) => {
@@ -96,9 +140,38 @@ export default function Settings({ authFetch, onClose, driveResult }: Props) {
 
         <section className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-[.18em] text-lavender">Cuenta</h3>
-          <p>{user?.nickname || user?.name}</p>
+          <p className="text-lg font-bold">{profile?.name ?? (user?.nickname || user?.name)}</p>
           {user?.email && <p className="text-sm text-violet-200/70">{user.email}</p>}
           {user?.sub && <p className="mt-1 break-all text-xs text-violet-300/50">ID de cuenta: {user.sub}</p>}
+        </section>
+
+        <section className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-[.18em] text-lavender">✏️ Tu nombre</h3>
+          <p className="text-sm text-violet-200/70">
+            Es el nombre que verán los demás en el chat. Puedes cambiarlo cuando quieras; tus mensajes anteriores también se actualizan.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <input className="input-glass min-w-0 flex-1 rounded-xl px-3 py-2" maxLength={24} placeholder="Tu nombre"
+              value={nameInput} disabled={!profile}
+              onChange={e => { setNameInput(e.target.value); setNameNotice(null); }}
+              onKeyDown={e => e.key === 'Enter' && canSave && sendName('PUT')} />
+            <button className="btn-glow rounded-xl px-5 font-semibold" disabled={!canSave} onClick={() => sendName('PUT')}>
+              {nameBusy ? '…' : 'Guardar'}
+            </button>
+          </div>
+          <p className={`mt-1 text-xs ${nameError && wanted !== profile?.name ? 'text-rose-300' : 'text-violet-300/50'}`}>
+            {nameError && wanted !== profile?.name ? nameError : `${wanted.length}/24 · letras, números, espacios y . _ -`}
+          </p>
+          {profile?.custom && (
+            <button className="btn-ghost mt-2 rounded-xl px-3 py-1.5 text-xs" disabled={nameBusy} onClick={() => sendName('DELETE')}>
+              Volver a usar el de mi cuenta ({profile.defaultName})
+            </button>
+          )}
+          {nameNotice && (
+            <p className={`mt-2 rounded-xl border p-2 text-sm ${nameNotice.ok ? 'border-emerald-300/25 bg-emerald-400/15 text-emerald-100' : 'border-rose-300/25 bg-rose-500/15 text-rose-100'}`}>
+              {nameNotice.text}
+            </p>
+          )}
         </section>
 
         <section className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">

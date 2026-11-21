@@ -33,6 +33,8 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
   const [typing, setTyping] = useState<Record<string, number>>({});
   const [showSettings, setShowSettings] = useState(false);
   const [online, setOnline] = useState(false);
+  // Nombre que eligio la persona (null = aun no se ha cargado; se usa el de su cuenta)
+  const [profileName, setProfileName] = useState<string | null>(null);
   // Si volvemos de Google (?drive=ok | ?drive=error), se abre Configuracion con el resultado.
   const [driveResult] = useState(() => new URLSearchParams(window.location.search).get('drive'));
   const lastTyping = useRef(0);
@@ -97,6 +99,13 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
   }, [driveResult]);
 
   useEffect(() => {
+    authFetch('/profile')
+      .then(r => (r.ok ? r.json() : null))
+      .then(p => { if (p?.name) setProfileName(p.name); })
+      .catch(() => undefined);
+  }, [authFetch]);
+
+  useEffect(() => {
     if (!socket) return;
     socket.on('channels:changed', reload);
     return () => { socket.off('channels:changed', reload); };
@@ -112,7 +121,8 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
     };
     load();
     socket.on('connect', load);
-    return () => { socket.off('connect', load); };
+    socket.on('messages:refresh', load); // alguien cambio su nombre: se vuelve a pedir el historial
+    return () => { socket.off('connect', load); socket.off('messages:refresh', load); };
   }, [active, socket, authFetch]);
 
   useEffect(() => {
@@ -217,14 +227,14 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
   };
 
   const typers = Object.keys(typing);
-  const me = (user?.nickname || user?.name || '').slice(0, 32);
+  const me = profileName ?? (user?.nickname || user?.name || '').slice(0, 32);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [messages.length, active?.id]);
   const goHome = () => { setActive(null); setTyping({}); };
 
   return (
     <div className="relative flex h-dvh gap-2 overflow-hidden p-2 md:gap-3 md:p-3">
-      {showSettings && <Settings authFetch={authFetch} driveResult={driveResult} onClose={() => setShowSettings(false)} />}
+      {showSettings && <Settings authFetch={authFetch} driveResult={driveResult} onNameChange={setProfileName} onClose={() => setShowSettings(false)} />}
 
       {/* ───────── Barra lateral ───────── */}
       <aside className="glass-deep flex w-44 shrink-0 flex-col rounded-3xl p-3 md:w-64">

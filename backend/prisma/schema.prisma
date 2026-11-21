@@ -97,3 +97,11 @@ model DriveBackup {
   @@id([sub, messageId])
   @@index([messageId])
 }
+
+// Nombre que cada cuenta eligio para mostrar en el chat.
+model Profile {
+  sub         String   @id
+  displayName String
+  nameKey     String   @unique // en minusculas y sin tildes: evita dos nombres "iguales" (Jose / josé)
+  updatedAt   DateTime @updatedAt
+}
