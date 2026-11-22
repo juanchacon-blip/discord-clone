@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 
-/** Fondo animado: auroras violetas que flotan sobre una rejilla tenue. */
+/** Fondo: dos auroras violetas muy suaves sobre una rejilla tenue. */
 export function Aurora() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-void">
-      <div className="animate-float absolute -left-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-violet-700/40 blur-[120px]" />
-      <div className="animate-float-slow absolute -right-32 top-1/4 h-[30rem] w-[30rem] rounded-full bg-fuchsia-600/25 blur-[120px]" />
-      <div className="animate-float absolute -bottom-48 left-1/3 h-[32rem] w-[32rem] rounded-full bg-indigo-600/30 blur-[130px]" style={{ animationDelay: '-5s' }} />
+      <div className="animate-float absolute -left-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-violet-700/30 blur-[140px]" />
+      <div className="animate-float-slow absolute -bottom-48 -right-32 h-[30rem] w-[30rem] rounded-full bg-fuchsia-600/15 blur-[140px]" />
       <div className="aurora-grid absolute inset-0" />
     </div>
   );
@@ -15,7 +14,7 @@ export function Aurora() {
 export function Logo({ size = 36 }: { size?: number }) {
   return (
     <div
-      className="grid shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 shadow-[0_0_26px_rgba(168,85,247,.7)]"
+      className="grid shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 shadow-[0_0_18px_rgba(168,85,247,.35)]"
       style={{ width: size, height: size }}
     >
       <svg viewBox="0 0 24 24" width={size * 0.55} height={size * 0.55} fill="white" aria-hidden>
@@ -84,7 +83,7 @@ export function Ring({ value, size = 104, children }: { value: number; size?: nu
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke="url(#ring-grad)" strokeWidth="9" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c * (1 - shown)}
-          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)', filter: 'drop-shadow(0 0 7px rgba(232,121,249,.75))' }}
+          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)', filter: 'drop-shadow(0 0 4px rgba(232,121,249,.4))' }}
         />
       </svg>
       <div className="absolute text-center">{children}</div>
@@ -101,7 +100,7 @@ const GRADIENTS = [
 export function Avatar({ name, className = 'h-9 w-9 text-sm' }: { name: string; className?: string }) {
   const hash = [...name].reduce((n, ch) => (n * 31 + ch.charCodeAt(0)) >>> 0, 7);
   return (
-    <div className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br font-bold text-white shadow-[0_0_14px_rgba(139,92,246,.45)] ${GRADIENTS[hash % GRADIENTS.length]} ${className}`}>
+    <div className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br font-bold text-white ${GRADIENTS[hash % GRADIENTS.length]} ${className}`}>
       {(name.trim()[0] || '?').toUpperCase()}
     </div>
   );

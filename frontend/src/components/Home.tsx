@@ -41,7 +41,6 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
     <div className="mx-auto grid max-w-5xl auto-rows-[9.75rem] grid-cols-2 gap-4 lg:grid-cols-4">
       {/* Bienvenida */}
       <Bento className="animate-rise col-span-2 row-span-2 flex flex-col justify-between p-6 md:p-8">
-        <div className="animate-float pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-fuchsia-500/25 blur-3xl" />
         <p className="text-sm font-semibold uppercase tracking-[.2em] text-lavender">{greeting()}</p>
         <div>
           <h2 className="text-gradient break-words text-4xl font-black leading-tight md:text-5xl">{name}</h2>
@@ -115,7 +114,7 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
             <div className="flex items-start justify-between">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500/20 text-xl font-bold text-lavender transition group-hover:bg-violet-500/40">#</span>
               {n > 0 && (
-                <span className="min-w-6 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-2 py-0.5 text-center text-xs font-bold shadow-[0_0_16px_rgba(217,70,239,.6)]">
+                <span className="min-w-6 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-2 py-0.5 text-center text-xs font-bold">
                   {n > 99 ? '99+' : n}
                 </span>
               )}

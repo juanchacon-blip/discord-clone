@@ -269,11 +269,11 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
             const isActive = c.id === active?.id;
             return (
               <button key={c.id} onClick={() => openChannel(c)}
-                className={`relative flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition-all duration-200 ${isActive ? 'bg-violet-500/20 text-white shadow-[inset_0_0_0_1px_rgba(196,181,253,.3)]' : 'hover:translate-x-0.5 hover:bg-white/5'} ${n > 0 ? 'font-bold text-white' : isActive ? 'font-semibold' : 'text-violet-200/70'}`}>
-                {isActive && <span className="absolute -left-1 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-violet-400 to-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,.9)]" />}
+                className={`relative flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition-all duration-200 ${isActive ? 'bg-violet-500/20 text-white shadow-[inset_0_0_0_1px_rgba(196,181,253,.3)]' : 'hover:bg-white/5'} ${n > 0 ? 'font-bold text-white' : isActive ? 'font-semibold' : 'text-violet-200/70'}`}>
+                {isActive && <span className="absolute -left-1 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-violet-400 to-fuchsia-400" />}
                 <span className="truncate"><span className="text-violet-400/70">#</span> {c.name}</span>
                 {n > 0 && (
-                  <span className="animate-pop min-w-5 shrink-0 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1.5 text-center text-xs font-bold text-white shadow-[0_0_14px_rgba(217,70,239,.65)]"
+                  <span className="animate-pop min-w-5 shrink-0 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1.5 text-center text-xs font-bold text-white"
                     title={`${n} mensaje(s) sin leer`}>
                     {n > 99 ? '99+' : n}
                   </span>
@@ -323,7 +323,6 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
           </div>
           <span className={`flex shrink-0 items-center gap-2 text-xs ${online ? 'text-emerald-300' : 'text-amber-300'}`}>
             <span className="relative flex h-2 w-2">
-              {online && <span className="animate-ping-soft absolute inset-0 rounded-full bg-emerald-400" />}
               <span className={`relative h-2 w-2 rounded-full ${online ? 'bg-emerald-400' : 'bg-amber-400'}`} />
             </span>
             {online ? 'Conectado' : 'Reconectando…'}
@@ -331,7 +330,7 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
         </header>
 
         {aviso && (
-          <button className="glass-deep animate-pop absolute inset-x-0 top-20 z-20 mx-auto w-fit max-w-[90%] rounded-full px-5 py-2.5 text-sm shadow-[0_10px_40px_-8px_rgba(168,85,247,.7)]" onClick={() => {
+          <button className="glass-deep animate-pop absolute inset-x-0 top-20 z-20 mx-auto w-fit max-w-[90%] rounded-full px-5 py-2.5 text-sm" onClick={() => {
             const c = channels.find(ch => ch.id === aviso.channelId);
             if (c) openChannel(c);
             setAviso(null);
@@ -362,13 +361,13 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
                             {m.createdAt && <span className="text-violet-300/40">{new Date(m.createdAt).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>}
                           </p>
                           {m.content && (
-                            <p className={`break-words rounded-2xl px-4 py-2.5 text-left leading-relaxed ${mine ? 'rounded-tr-md bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-[0_8px_26px_-10px_rgba(192,38,211,.9)]' : 'glass rounded-tl-md'}`}>
+                            <p className={`break-words rounded-2xl px-4 py-2.5 text-left leading-relaxed ${mine ? 'rounded-tr-md bg-gradient-to-br from-violet-600 to-fuchsia-600' : 'glass rounded-tl-md'}`}>
                               {m.content}
                             </p>
                           )}
                           {m.fileUrl && m.mimeType?.startsWith('image/') ? (
                             <a href={fileHref(m.fileUrl)} target="_blank" rel="noreferrer"
-                              className="group mt-1 block overflow-hidden rounded-2xl border border-white/15 shadow-[0_12px_40px_-14px_rgba(139,92,246,.8)]">
+                              className="group mt-1 block overflow-hidden rounded-2xl border border-white/15">
                               <img src={fileHref(m.fileUrl)} alt={m.fileName} loading="lazy"
                                 className="max-h-72 max-w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
                             </a>
