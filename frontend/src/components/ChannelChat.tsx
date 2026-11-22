@@ -324,7 +324,7 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
       </aside>
 
       {/* ───────── Zona principal ───────── */}
-      <main className="glass relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-3xl">
+      <main className="glass-deep relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-3xl">
         <header className="relative flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 md:px-6">
           <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/50 to-transparent" />
           <div className="flex min-w-0 items-center gap-3">

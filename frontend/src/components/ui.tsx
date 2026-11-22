@@ -25,15 +25,15 @@ export function Logo({ size = 36 }: { size?: number }) {
 }
 
 /** Tarjeta del Bento Grid: vidrio + foco de luz que sigue al mouse + elevación al pasar. */
-export function Bento({ children, className = '', style, onClick }: {
-  children: ReactNode; className?: string; style?: CSSProperties; onClick?: () => void;
+export function Bento({ children, className = '', style, onClick, panel }: {
+  children: ReactNode; className?: string; style?: CSSProperties; onClick?: () => void; panel?: boolean;
 }) {
   const move = (e: MouseEvent<HTMLElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
     e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
   };
-  const cls = `bento glass group ${className}`;
+  const cls = `bento ${panel ? 'panel' : 'glass'} group ${className}`;
   return onClick ? (
     <button type="button" onMouseMove={move} onClick={onClick} className={`${cls} text-left`} style={style}>{children}</button>
   ) : (
