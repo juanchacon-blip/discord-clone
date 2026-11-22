@@ -33,6 +33,8 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
   const [typing, setTyping] = useState<Record<string, number>>({});
   const [showSettings, setShowSettings] = useState(false);
   const [online, setOnline] = useState(false);
+  // Panel lateral en movil: cerrado por defecto (en escritorio siempre esta visible)
+  const [menuOpen, setMenuOpen] = useState(false);
   // Nombre que eligio la persona (null = aun no se ha cargado; se usa el de su cuenta)
   const [profileName, setProfileName] = useState<string | null>(null);
   // Si volvemos de Google (?drive=ok | ?drive=error), se abre Configuracion con el resultado.
@@ -181,7 +183,15 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
   const openChannel = (c: Channel) => {
+    setMenuOpen(false);
     setActive(c);
     setTyping({});
     setUnread(u => ({ ...u, [c.id]: 0 }));
@@ -230,14 +240,18 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
   const me = profileName ?? (user?.nickname || user?.name || '').slice(0, 32);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [messages.length, active?.id]);
-  const goHome = () => { setActive(null); setTyping({}); };
+  const goHome = () => { setMenuOpen(false); setActive(null); setTyping({}); };
 
   return (
     <div className="relative flex h-dvh gap-2 overflow-hidden p-2 md:gap-3 md:p-3">
       {showSettings && <Settings authFetch={authFetch} driveResult={driveResult} onNameChange={setProfileName} onClose={() => setShowSettings(false)} />}
 
-      {/* ───────── Barra lateral ───────── */}
-      <aside className="glass-deep flex w-44 shrink-0 flex-col rounded-3xl p-3 md:w-64">
+      {/* Fondo oscuro que cierra el panel al tocarlo (solo movil) */}
+      {menuOpen && <div className="animate-fade fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setMenuOpen(false)} aria-hidden />}
+
+      {/* ───────── Barra lateral: cajon deslizable en movil, fija desde md ───────── */}
+      <aside id="sidebar"
+        className={`glass-deep fixed inset-y-2 left-2 z-40 flex w-72 max-w-[85vw] flex-col rounded-3xl p-3 transition-[translate,visibility] duration-300 ease-out md:static md:z-auto md:w-64 md:max-w-none md:shrink-0 md:translate-x-0 md:visible ${menuOpen ? 'translate-x-0 visible' : '-translate-x-[110%] invisible'}`}>
         <button onClick={goHome} className="mb-4 flex items-center gap-3 rounded-2xl p-1 text-left transition hover:bg-white/5">
           <Logo size={38} />
           <span className="text-gradient text-xl font-extrabold tracking-tight">Nebula</span>
@@ -282,8 +296,8 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
             <p className="min-w-0 flex-1 truncate text-sm font-semibold">{me}</p>
           </div>
           <div className="grid gap-1.5 text-sm">
-            {isAdmin && <button className="btn-ghost rounded-xl px-3 py-2 text-left !text-amber-200 !border-amber-300/30" onClick={onOpenAdmin}>🛡️ Administración</button>}
-            <button className="btn-ghost rounded-xl px-3 py-2 text-left" onClick={() => setShowSettings(true)}>⚙️ Configuración</button>
+            {isAdmin && <button className="btn-ghost rounded-xl px-3 py-2 text-left !text-amber-200 !border-amber-300/30" onClick={() => { setMenuOpen(false); onOpenAdmin(); }}>🛡️ Administración</button>}
+            <button className="btn-ghost rounded-xl px-3 py-2 text-left" onClick={() => { setMenuOpen(false); setShowSettings(true); }}>⚙️ Configuración</button>
             <button className="btn-ghost rounded-xl px-3 py-2 text-left"
               onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>
               Cerrar sesión
@@ -296,6 +310,11 @@ export default function ChannelChat({ isAdmin, onOpenAdmin }: { isAdmin: boolean
       <main className="glass relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-3xl">
         <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 md:px-6">
           <div className="flex min-w-0 items-center gap-3">
+            <button className="btn-ghost relative grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xl md:hidden"
+              onClick={() => setMenuOpen(true)} aria-label="Abrir menú" aria-controls="sidebar" aria-expanded={menuOpen}>
+              ☰
+              {totalUnread > 0 && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,.9)]" aria-label="Hay mensajes sin leer" />}
+            </button>
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-500/20 text-lg font-bold text-lavender">{active ? '#' : '◈'}</span>
             <div className="min-w-0">
               <h1 className="truncate text-lg font-bold leading-tight">{active ? active.name : 'Inicio'}</h1>
