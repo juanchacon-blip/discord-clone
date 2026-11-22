@@ -105,3 +105,26 @@ export function Avatar({ name, className = 'h-9 w-9 text-sm' }: { name: string; 
     </div>
   );
 }
+
+const ICONS = {
+  home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+  hash: <path d="M5 9h14M5 15h14M10 3 8 21M16 3l-2 18" />,
+  sliders: <><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" /><circle cx="15" cy="6" r="2" /><circle cx="9" cy="12" r="2" /><circle cx="17" cy="18" r="2" /></>,
+  shield: <><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /><path d="m9 12 2 2 4-4" /></>,
+  clip: <path d="M21 11.5 12.5 20a5 5 0 0 1-7-7L14 4.5a3.5 3.5 0 0 1 5 5L10.5 18a2 2 0 0 1-3-3L15 7.5" />,
+  logout: <path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h10" />,
+  send: <path d="M21 3 10 14M21 3l-7 18-4-8-8-4z" />,
+  close: <path d="M6 6l12 12M18 6 6 18" />,
+};
+export type IconName = keyof typeof ICONS;
+
+/** Iconos de línea (hereda el color del texto). */
+export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {ICONS[name]}
+    </svg>
+  );
+}

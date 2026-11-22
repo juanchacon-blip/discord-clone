@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bento, Ring, useCountUp } from './ui';
+import { Bento, Icon, Ring, useCountUp } from './ui';
 
 type Chan = { id: number; name: string };
 type DriveInfo = { enabled: boolean; connected: boolean; images?: { total: number; ok: number; pending: number } };
@@ -41,9 +41,10 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
     <div className="mx-auto grid max-w-5xl auto-rows-[9.75rem] grid-cols-2 gap-4 lg:grid-cols-4">
       {/* Bienvenida */}
       <Bento className="animate-rise col-span-2 row-span-2 flex flex-col justify-between p-6 md:p-8">
-        <p className="text-sm font-semibold uppercase tracking-[.2em] text-lavender">{greeting()}</p>
+        <div aria-hidden className="aurora-grid pointer-events-none absolute inset-0 opacity-70" />
+        <p className="font-mono text-xs tracking-[.2em] text-lavender/80">&gt; {greeting().toLowerCase()}_</p>
         <div>
-          <h2 className="text-gradient break-words text-4xl font-black leading-tight md:text-5xl">{name}</h2>
+          <h2 className="font-display text-gradient break-words text-4xl font-bold leading-tight md:text-6xl">{name}</h2>
           <p className="mt-3 max-w-sm text-violet-100/75">
             {totalUnread > 0
               ? `Tienes ${totalUnread} mensaje${totalUnread === 1 ? '' : 's'} esperándote.`
@@ -54,13 +55,13 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
 
       {/* Estadísticas */}
       <Bento className="animate-rise flex flex-col justify-between p-5" style={{ animationDelay: '80ms' }}>
-        <p className="text-xs font-semibold uppercase tracking-[.18em] text-lavender">Canales</p>
-        <p className="text-5xl font-black tabular-nums">{nChannels}</p>
+        <p className="font-mono text-[11px] uppercase tracking-[.2em] text-lavender/80">Canales</p>
+        <p className="font-display text-5xl font-bold tabular-nums">{nChannels}</p>
       </Bento>
       <Bento className="animate-rise flex flex-col justify-between p-5" style={{ animationDelay: '140ms' }}>
-        <p className="text-xs font-semibold uppercase tracking-[.18em] text-lavender">Sin leer</p>
+        <p className="font-mono text-[11px] uppercase tracking-[.2em] text-lavender/80">Sin leer</p>
         <div className="flex items-end justify-between">
-          <p className={`text-5xl font-black tabular-nums ${totalUnread > 0 ? 'text-gradient' : ''}`}>{nUnread}</p>
+          <p className={`font-display text-5xl font-bold tabular-nums ${totalUnread > 0 ? 'text-gradient' : ''}`}>{nUnread}</p>
           {totalUnread > 0 && (
             <span className="relative mb-2 grid h-3 w-3">
               <span className="animate-ping-soft absolute inset-0 rounded-full bg-fuchsia-500" />
@@ -78,14 +79,14 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
               <span className="text-xl font-extrabold tabular-nums">{Math.round(pct * 100)}%</span>
             </Ring>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[.18em] text-lavender">Respaldo en Drive</p>
+              <p className="font-mono text-[11px] uppercase tracking-[.2em] text-lavender/80">Respaldo en Drive</p>
               <p className="mt-1 font-semibold">{img.ok} de {img.total} imágenes</p>
               <p className="text-sm text-violet-200/60">{img.pending > 0 ? `⏳ ${img.pending} en proceso…` : 'Todo en orden ✨'}</p>
             </div>
           </>
         ) : (
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[.18em] text-lavender">Respaldo en Drive</p>
+            <p className="font-mono text-[11px] uppercase tracking-[.2em] text-lavender/80">Respaldo en Drive</p>
             {drive === null && <p className="mt-2 text-sm text-violet-200/60">Consultando…</p>}
             {drive && !drive.enabled && <p className="mt-2 text-sm text-violet-200/60">Aún no está configurado en el servidor.</p>}
             {drive?.enabled && !drive.connected && (
@@ -100,7 +101,7 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
         )}
       </Bento>
 
-      <h3 className="col-span-full -mb-1 mt-2 text-xs font-semibold uppercase tracking-[.2em] text-violet-300/60">Tus canales</h3>
+      <h3 className="col-span-full -mb-1 mt-2 text-xs font-semibold uppercase tracking-[.2em] text-violet-300/60">// tus canales</h3>
 
       {channels.length === 0 && (
         <Bento className="animate-rise col-span-2 flex items-center p-6 text-violet-100/70">
@@ -112,7 +113,7 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
         return (
           <Bento key={c.id} onClick={() => onOpen(c)} className="animate-rise flex flex-col justify-between p-5" style={{ animationDelay: `${260 + i * 60}ms` }}>
             <div className="flex items-start justify-between">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500/20 text-xl font-bold text-lavender transition group-hover:bg-violet-500/40">#</span>
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-500/20 text-lavender transition group-hover:bg-violet-500/40"><Icon name="hash" size={20} /></span>
               {n > 0 && (
                 <span className="min-w-6 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-2 py-0.5 text-center text-xs font-bold">
                   {n > 99 ? '99+' : n}
@@ -120,8 +121,8 @@ export default function Home({ name, channels, unread, onOpen, onOpenSettings, a
               )}
             </div>
             <div>
-              <p className="truncate text-lg font-bold">{c.name}</p>
-              <p className="text-sm text-violet-300/60 transition group-hover:translate-x-1 group-hover:text-lavender">Entrar →</p>
+              <p className="truncate font-display text-lg font-bold">{c.name}</p>
+              <p className="font-mono text-xs text-violet-300/60 transition group-hover:translate-x-1 group-hover:text-lavender">Entrar →</p>
             </div>
           </Bento>
         );
